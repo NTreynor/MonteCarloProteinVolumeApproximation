@@ -90,7 +90,7 @@ public:
         float pY = point.getY();
         float pZ = point.getZ();
 // Distance = d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
-        if ((std::sqrt(((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z)))) <= this->radius){
+        if ((std::sqrt(((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z)))) <= this->radius){ // You can remove the SQRT
             return true;
         } else {
             return false;
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
 
 
     // For testing purposes
-
+/*
     Point p = Point(0.0, 0.0, 0.0);
     Ball b = Ball(0.0, 0.0, 0.0, 1);
     std::cout << "Ball b contains point p? " << boolalpha << b.contains(p) << std::endl;
@@ -148,11 +148,11 @@ int main(int argc, char** argv) {
     std::cout << "Ball b4 contains point p4? " << boolalpha << b4.contains(p4) << std::endl;
     std::cout << "Distance: " << b4.distance(p4) << std::endl;
     std::cout << "Radius: " << b4.getRadius() << std::endl;
-
+*/
     // Testing Completed.
 ///*
     FILE *textPtr = fopen(argv[1], "r");
-    std::cout << argv[1] << std::endl; // Print it to examine contents of the text file.
+    // std::cout << argv[1] << std::endl; // Print it to examine contents of the text file.
 
     int numInputs = 0;
     float tempX = 0;
@@ -234,10 +234,14 @@ int main(int argc, char** argv) {
     float yLength = maxY - minY;
     float zLength = maxZ - minZ;
 
+    float volumeOfBox = xLength * yLength * zLength; // Volume of box can now be calculated.
+
     // Seed random number generation.
     srand (static_cast <unsigned> (time(0)));
 
     // Begin random number generation.
+
+
 
     float randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
     float randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
@@ -257,7 +261,10 @@ int main(int argc, char** argv) {
     cout << "Random Y value in range: " << randY << endl;
     cout << "Random Z value in range: " << randZ << endl;
 
-    int pointsToTest = 500000;
+
+
+    int pointsToTest = stoi(argv[2]); // Probably will become a command line argument.
+
     Point **pointStorage = new Point *[pointsToTest];
     int Sum = 0;
 
@@ -267,114 +274,135 @@ for (int i = 0; i < pointsToTest; i++) {
     randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
     pointStorage[i] = new Point(randX, randY, randZ); // Initializing set of points to test
 }
-for (int i = 0; i < pointsToTest; i++){
-    for (int j = 0; j < numInputs; j++){
-        if (array[j]->contains(*pointStorage[i])){
-            Sum += 1;
-            cout << "Point located inside protein structure. Total: " << Sum << " / " << i << endl;
-            break;
+
+
+    float volumeOfProtein;
+    float proportionInside;
+    float proportionInsideSquared;
+    float standardDeviation;
+
+    float *volStorage = new float [pointsToTest];
+    float *StdDevStorage = new float [pointsToTest];
+
+
+    for (int i = 0; i < pointsToTest; i++){
+        for (int j = 0; j < numInputs; j++){
+            if (array[j]->contains(*pointStorage[i])){
+                Sum += 1;
+                cout << "Point located inside protein structure. Total: " << Sum << " / " << i+1 << endl;
+
+
+
+                volumeOfProtein = volumeOfBox * Sum / (i+1);
+                proportionInside = volumeOfProtein / volumeOfBox;
+                proportionInsideSquared = proportionInside * proportionInside;
+                standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/(i+1));
+
+                cout << "Volume of protein calculated so far: " << volumeOfProtein << endl;
+                cout << "Standard Deviation: " << standardDeviation << endl;
+
+                volStorage[i] = volumeOfProtein;
+                StdDevStorage[i] = standardDeviation;
+
+                break;
+            }
+            if (j == numInputs - 1){
+                Sum += 0;
+                cout << "Point NOT located inside protein structure. Total: " << Sum << " / " << i+1 << endl;
+
+                volumeOfProtein = volumeOfBox * Sum / (i+1);
+                proportionInside = volumeOfProtein / volumeOfBox;
+                proportionInsideSquared = proportionInside * proportionInside;
+                standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/(i+1));
+
+                cout << "Volume of protein calculated so far: " << volumeOfProtein << endl;
+                cout << "Standard Deviation: " << standardDeviation << endl;
+
+                volStorage[i] = volumeOfProtein;
+                StdDevStorage[i] = standardDeviation;
+
+                break;
+            }
         }
+
     }
 
-}
-    float volumeOfBox = xLength * yLength * zLength;
-    float volumeOfProtein = volumeOfBox * Sum / pointsToTest;
-    cout << "Completed testing. Total: " << Sum << " / " << pointsToTest << endl;
+    volumeOfProtein = volumeOfBox * Sum / pointsToTest;
+    proportionInside = volumeOfProtein / volumeOfBox;
+    proportionInsideSquared = proportionInside * proportionInside;
+    standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/pointsToTest);
+
     cout << endl;
+    cout << "Completed testing. Total: " << Sum << " / " << pointsToTest << endl;
     cout << "Volume of protein: " << volumeOfProtein << endl;
     cout << "Volume of box: " << volumeOfBox << endl;
+    cout << "Standard Deviation: " << standardDeviation << endl;
 
-    float error = abs(100 - (100 * volumeOfProtein / 35490.34));
+    float error = (100 - (100 * volumeOfProtein / 35490.34));
+    float absError = abs(100 - (100 * volumeOfProtein / 35490.34));
     cout << "Error %: " << error << endl;
 
 
+    // At this point, I am printing values for graphing purposes:
+
+    cout  << 2 << " " << volStorage[1] << " " << StdDevStorage[1] << endl;
+    cout  << 10 << " " << volStorage[9] << " " << StdDevStorage[9] << endl;
+    cout  << 50 << " " << volStorage[49] << " " << StdDevStorage[49] << endl;
+    cout  << 100 << " " << volStorage[99] << " " << StdDevStorage[99] << endl;
+    cout  << 150 << " " << volStorage[149] << " " << StdDevStorage[149] << endl;
+    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
+        cout  << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    }
+
+
+
+    // And now separating them to paste into excel
+
+    cout  << 2 << endl;
+    cout  << 10 << endl;
+    cout  << 50 << endl;
+    cout  << 100 << endl;
+    cout  << 150 << endl;
+    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
+        cout  << i << endl;
+        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    }
+
+    cout   << " " << volStorage[1]  << endl;
+    cout   << " " << volStorage[9] << endl;
+    cout   << " " << volStorage[49] << endl;
+    cout   << " " << volStorage[99] << endl;
+    cout   << " " << volStorage[149] << endl;
+    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
+        cout  << volStorage[i]  << endl;
+        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    }
+
+    cout  << StdDevStorage[1] << endl;
+    cout  <<  StdDevStorage[9] << endl;
+    cout  <<  StdDevStorage[49] << endl;
+    cout  <<  StdDevStorage[99] << endl;
+    cout  <<  StdDevStorage[149] << endl;
+    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
+        cout  <<  StdDevStorage[i] << endl;
+        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    }
     return 0;
+
+
+    // For visualization, we want a table with the number of points tested, our guess at volume, standard deviation, and an asymptotic line with
+    // Use matlab for visualizations.
 }
 
 
 
-//*/
-/*
-    string filename = "Proteins";
-    ifstream input;
-    input.open(filename);
-
-    if (!input.is_open()){
-        return 1; // Failed to open file;
-    }
-    while(input){
-        string line;
-        getline(input, line, ' ');
-
-        float numInputs;
-        input >> numInputs;
-
-        cout << line << "--"
-    }
-    */
-
-
-// Current set to test: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-/*
-
-    string filename = "Proteins.txt";
-    ifstream myFileStream(filename.c_str());
-    if (!myFileStream.is_open()) {
-        cout << "Failed to open file" << endl; // Error message
-        return 0;
-    }
-    cout << "File opened" << endl;
-
-    int numInputs;
-    float tempX;
-    float tempY;
-    float tempZ;
-    float tempRadius;
-
-    string myString;
-    string line;
-
-    getline(myFileStream, line); // Parse first line
-
-    ifstream ss(line);
-    numInputs = ::atoi(line.c_str()); // Testing this here instead of later
-    //getline(ss, myString, '\n');
-    cout << "Got Line" << endl;
-    cout << "String: " << line << endl;
-    //numInputs = ::atoi(line.c_str());
-    cout << "Parsed into float" << endl;
-
-    cout << numInputs << endl; // output
-
-
-    // Now we can begin parsing the rest of the file
-    for (int i = 0; i < numInputs; i++) {
-        getline(myFileStream, line); //Grab the next line
-        ifstream ss(line);
-        getline(ss, myString, '\n'); // Doesn't seem to work
-
-        float tempFloat;
-        tempFloat = ::atoi(myString.c_str()); // Not functional
-        tempX = tempFloat;
-        tempFloat = ::atoi(line.c_str()); // Grabs the int before the decimal place
-        tempY = tempFloat;
-        tempFloat = ::atoi(line.c_str());
-        tempZ = tempFloat;
-        tempFloat = ::atoi(line.c_str());
-        tempRadius = tempFloat;
-        cout << "X: " << tempX << " Y: " << tempY << " Z: " << tempZ << " Radius: " << tempRadius << endl;
-    }
-    */
-    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-//    return 0;
-//}
-
-
 
 
 
 
 /*
+ * Basic methodology:
  *
  * int sum;
  *
