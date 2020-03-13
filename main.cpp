@@ -3,110 +3,157 @@
 // Created by Nicholas Treynor 2/24
 
 #include <iostream>
-#include <stdio.h>      /* printf */
-#include <math.h>       /* sqrt */
-#include <fstream>
-#include <sstream>
+#include <cstdio>      /* printf */
+#include <cmath>       /* sqrt */
 #include <string>
 #include <ctime>
 #include <cstdlib>
 
 using namespace std;
 
-class Point {
+
+double generateRandomNumberInRange(double min, double max){
+    double randX = min + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(max-min)));
+    return randX;
+}
+
+
+class Point { // An object class that we will use to represent the points we will generate within our union of balls model of a protein structure.
 public:
-    float getX() {
+    double getX() {
         return x;
     }
 
-    float getY() {
+    double getY() {
         return y;
     }
 
-    float getZ() {
+    double getZ() {
         return z;
     }
 
-    Point(float initX, float initY, float initZ) {
+    Point(double initX, double initY, double initZ) { // Constructor for the object
         x = initX;
         y = initY;
         z = initZ;
     }
 
 private:
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
 
 
 
 
 };
 
-class Ball {
+class Ball { // An object class that we will use to represent balls within our union of balls model of a protein.
 public:
-    float getX() {
+    double getX() {
         return x;
     }
 
-    float getY() {
+    double getY() {
         return y;
     }
 
-    float getZ() {
+    double getZ() {
         return z;
     }
 
-    float maxX() {
+
+    // The following min/max x/y/z functions modify the center of the point by the radius in various directions in order to determine the true maximum and minimum X,Y, and Z coordinates of the sphere.
+    // This will later be utilized to determine the global max and min X,Y, and Z points that will bound our box "R".
+    double maxX() {
         return x + radius;
     }
 
-    float maxY() {
+    double maxY() {
         return y + radius;
     }
 
-    float maxZ() {
+    double maxZ() {
         return z + radius;
     }
 
-    float minX() {
+    double minX() {
         return x - radius;
     }
 
-    float minY() {
+    double minY() {
         return y - radius;
     }
 
-    float minZ() {
+    double minZ() {
         return z - radius;
     }
 
-    float getRadius() {
+    double getRadius() {
         return radius;
     }
 
     bool contains(Point point) {
-        float pX = point.getX();
-        float pY = point.getY();
-        float pZ = point.getZ();
+        double pX = point.getX();
+        double pY = point.getY();
+        double pZ = point.getZ();
 // Distance = d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
-        if ((std::sqrt(((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z)))) <= this->radius){ // You can remove the SQRT
+// We will use a slight modification to my first method, which was comparing distance to the radius of the sphere, and instead compare distance squared against radius squared, as it is easier to compute,
+// as we do not need to utilize the Sqrt() function.
+        if ((((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z))) < (this->radius*this->radius)){
             return true;
         } else {
             return false;
         }
-        return false;
     }
 
-    float distance(Point point) {
-        float pX = point.getX();
-        float pY = point.getY();
-        float pZ = point.getZ();
-// Distance = d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
+    Point generateRandomPointOnSphere(){
+
+        // This is Cory Simon's method for generating points uniformly over a unit circle, modified slightly to generate points just beyond the surface of the sphere this function is called on.
+        // Writeup can be found here: http://corysimon.github.io/articles/uniformdistn-on-sphere/
+
+        double theta = 2 * M_PI * generateRandomNumberInRange(0.0, 1);
+        double phi = acos(1 - 2 * generateRandomNumberInRange(0.0, 1));
+
+        // Calculate the position of the point on surface RELATIVE to the center point:
+
+        double x = sin(phi) * cos(theta) * getRadius() * 1.000000000001; // Multiplying by 1.000000000001 allows us to ensure rounding errors do not cause the point to be counted as "contained" within the ball this point
+        double y = sin(phi) * sin(theta) * getRadius() * 1.000000000001; // is generated on the surface of, without impacting in any significant way the accuracy of our program.
+        double z = cos(phi) * getRadius() * 1.000000000001;
+
+
+
+
+        double pointX = x;
+        double pointY = y;
+        double pointZ = z;
+
+        // Now we make sure that the X,Y,Z points are adjusted by the center point of the sphere!
+
+        pointX += getX();
+        pointY += getY();
+        pointZ += getZ();
+
+        Point NewPoint = Point(pointX, pointY, pointZ);
+
+        return NewPoint;
+    }
+
+    double surfaceArea(){
+        double R = this->radius;
+        double surfaceArea = (4)*(M_PI)*(R*R); // 4 * pi * r^2
+        return surfaceArea;
+    }
+
+    double distance(Point point) {
+        double pX = point.getX();
+        double pY = point.getY();
+        double pZ = point.getZ();
+     // Distance formula: d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
         return (std::sqrt(((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z))));
     }
 
-    Ball(float initX, float initY, float initZ, float initRadius) {
+    Ball(double initX, double initY, double initZ, double initRadius) { // Constructor for the object
         x = initX;
         y = initY;
         z = initZ;
@@ -114,282 +161,213 @@ public:
     }
 
 private:
-    float x;
-    float y;
-    float z;
-    float radius;
+    double x;
+    double y;
+    double z;
+    double radius;
 };
+
+
 
 int main(int argc, char** argv) {
 
+    // Command line arguments should be fed in in the following form:
+    // String fileName Int PointsToTest Int PointsToTestOnSurface
+    // Like so:
+    // Proteins.txt 5000 10000
 
-    // For testing purposes
-/*
-    Point p = Point(0.0, 0.0, 0.0);
-    Ball b = Ball(0.0, 0.0, 0.0, 1);
-    std::cout << "Ball b contains point p? " << boolalpha << b.contains(p) << std::endl;
-    std::cout << "Distance: " << b.distance(p) << std::endl;
-    std::cout << "Radius: " << b.getRadius() << std::endl;
+    // The above example would test 5000 points in an attempt to determine volume, and 10,000 points distributed across the surface of balls in order to determine surface area.
 
-    Point p2 = Point(0.0, 0.0, -0.0);
-    Ball b2 = Ball(0.0, -0.0, 0.0, 0);
-    std::cout << "Ball b2 contains point p2? " << boolalpha << b2.contains(p2) << std::endl;
-    std::cout << "Distance: " << b2.distance(p2) << std::endl;
-    std::cout << "Radius: " << b2.getRadius() << std::endl;
+    FILE *textPtr = fopen(argv[1], "r"); // Open up our file from input to parse.
 
-    Point p3 = Point(0.3, 0.5, 0.3);
-    Ball b3 = Ball(0.0, 0.0, 0.0, 1);
-    std::cout << "Ball b3 contains point p3? " << boolalpha << b3.contains(p3) << std::endl;
-    std::cout << "Distance: " << b3.distance(p3) << std::endl;
-    std::cout << "Radius: " << b3.getRadius() << std::endl;
+    int pointsToTest = stoi(argv[2]); // Reading in the number of points to test from the input (for volume)
+    int pointsToTestOnSurface = stoi(argv[3]); // Reading in the number of points to test from the input (for surface area)
 
-    Point p4 = Point(5.0, 7.0, 2.0);
-    Ball b4 = Ball(0.0, 2.0, 14.0, 9);
-    std::cout << "Ball b4 contains point p4? " << boolalpha << b4.contains(p4) << std::endl;
-    std::cout << "Distance: " << b4.distance(p4) << std::endl;
-    std::cout << "Radius: " << b4.getRadius() << std::endl;
-*/
-    // Testing Completed.
-///*
-    FILE *textPtr = fopen(argv[1], "r");
-    // std::cout << argv[1] << std::endl; // Print it to examine contents of the text file.
+    // Here we initialize our containers, to be updated shortly.
 
     int numInputs = 0;
-    float tempX = 0;
-    float tempY = 0;
-    float tempZ = 0;
-    float tempRadius = 0;
+    double tempX = 0;
+    double tempY = 0;
+    double tempZ = 0;
+    double tempRadius = 0;
 
-    float maxX;
-    float maxY;
-    float maxZ;
-    float minX;
-    float minY;
-    float minZ;
+    double maxX;
+    double maxY;
+    double maxZ;
+    double minX;
+    double minY;
+    double minZ;
 
     fscanf(textPtr, "        %d\n", &numInputs); // Parsing first line of text file
 
-    cout << numInputs << std::endl; // For testing purposes
+    Ball **ballStorage = new Ball *[numInputs]; // Initialize the array of spheres using our command line inputs.
 
-    Ball **array = new Ball *[numInputs]; // Initialize the array of spheres
-
-    fscanf(textPtr, "  %f     %f     %f     %f\n", &tempX, &tempY, &tempZ, &tempRadius);
-    array[0] = new Ball(tempX, tempY, tempZ, tempRadius);
-    cout << "Ball " << 0 << " radius: " << array[0]->getRadius() << endl;
-    cout << "Ball " << 0 << " X, Y, Z: " << array[0]->getX() << ", " << array[0]->getY() << ", " << array[0]->getZ()
-         << endl;
+    // Scan in the initial set of values from the second line
+    fscanf(textPtr, "  %lf     %lf     %lf     %lf\n", &tempX, &tempY, &tempZ, &tempRadius);
+    ballStorage[0] = new Ball(tempX, tempY, tempZ, tempRadius);
 
     // After reading in the first of the objects, init. the min/max so we can begin to determine the bounds of the box "R" in the first pass.
-    maxX = array[0]->maxX();
-    maxY = array[0]->maxY();
-    maxZ = array[0]->maxZ();
-    minX = array[0]->minX();
-    minY = array[0]->minY();
-    minZ = array[0]->minZ();
+    maxX = ballStorage[0]->maxX();
+    maxY = ballStorage[0]->maxY();
+    maxZ = ballStorage[0]->maxZ();
+    minX = ballStorage[0]->minX();
+    minY = ballStorage[0]->minY();
+    minZ = ballStorage[0]->minZ();
 
+    // Now we begin looping through the remainder of the lines in the text file.
     for (int i = 1; i < numInputs; i += 1) {
-        fscanf(textPtr, "  %f     %f     %f     %f\n", &tempX, &tempY, &tempZ, &tempRadius);
-        array[i] = new Ball(tempX, tempY, tempZ, tempRadius);
-        cout << "Ball " << i << " radius: " << array[i]->getRadius() << endl;
-        cout << "Ball " << i << " X, Y, Z: " << array[i]->getX() << ", " << array[i]->getY() << ", " << array[i]->getZ()
-             << endl;
+        fscanf(textPtr, "  %lf     %lf     %lf     %lf\n", &tempX, &tempY, &tempZ, &tempRadius);
+        ballStorage[i] = new Ball(tempX, tempY, tempZ, tempRadius);
 
         // Values have been read into the new object. Now check them against current min/max and update accordingly
-
-        if (array[i]->maxX() > maxX) {
-            maxX = (array[i]->maxX());
-            cout << "Global Max X updated: " << maxX << endl;
+        if (ballStorage[i]->maxX() > maxX) {
+            maxX = (ballStorage[i]->maxX()); // Global minimum X has been updated
         }
-        if (array[i]->maxY() > maxY) {
-            maxY = (array[i]->maxY());
-            cout << "Global Max Y updated: " << maxY << endl;
+        if (ballStorage[i]->maxY() > maxY) {
+            maxY = (ballStorage[i]->maxY()); // Global minimum Y has been updated
         }
-        if (array[i]->maxZ() > maxZ) {
-            maxZ = (array[i]->maxZ());
-            cout << "Global Max Z updated: " << maxZ << endl;
+        if (ballStorage[i]->maxZ() > maxZ) {
+            maxZ = (ballStorage[i]->maxZ()); // Global minimum Z has been updated
         }
 
         // And now the min X/Y/Z
 
-        if (array[i]->minX() < minX) {
-            minX = (array[i]->minX());
-            cout << "Global Min X updated: " << minX << endl;
+        if (ballStorage[i]->minX() < minX) {
+            minX = (ballStorage[i]->minX()); // Global minimum X has been updated
         }
-        if (array[i]->minY() < minY) {
-            minY = (array[i]->minY());
-            cout << "Global Min Y updated: " << minY << endl;
+        if (ballStorage[i]->minY() < minY) {
+            minY = (ballStorage[i]->minY()); // Global minimum Y has been updated
         }
-        if (array[i]->minZ() < minZ) {
-            minZ = (array[i]->minZ());
-            cout << "Global Min Z updated: " << minZ << endl;
+        if (ballStorage[i]->minZ() < minZ) {
+            minZ = (ballStorage[i]->minZ()); // Global minimum Z has been updated
         }
     }
 
-    cout << "Bounds of box: " << endl;
-    cout << "X: " << minX << " to " << maxX << endl;
-    cout << "Y: " << minY << " to " << maxY << endl;
-    cout << "Z: " << minZ << " to " << maxZ << endl;
+// Now that we have the global min and max, we can determine the dimensions of our box R.
+    double xLength = maxX - minX;
+    double yLength = maxY - minY;
+    double zLength = maxZ - minZ;
 
-    float xLength = maxX - minX;
-    float yLength = maxY - minY;
-    float zLength = maxZ - minZ;
+    double volumeOfBox = xLength * yLength * zLength; // Volume of box can now be calculated. This is our box "R".
 
-    float volumeOfBox = xLength * yLength * zLength; // Volume of box can now be calculated.
+    Point **pointStorage = new Point *[pointsToTest]; // Generating an array to store our points as we create them.
 
-    // Seed random number generation.
+    // Seed random number generation, and generate containers for random values
     srand (static_cast <unsigned> (time(0)));
 
-    // Begin random number generation.
+    double randX;
+    double randY;
+    double randZ;
 
-
-
-    float randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    float randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    float randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
-
-    cout << "Testing Random Number generation:" << endl;
-    cout << "Random X value in range: " << randX << endl;
-    cout << "Random Y value in range: " << randY << endl;
-    cout << "Random Z value in range: " << randZ << endl;
-
-    randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
-
-    cout << "Testing Random Number generation:" << endl;
-    cout << "Random X value in range: " << randX << endl;
-    cout << "Random Y value in range: " << randY << endl;
-    cout << "Random Z value in range: " << randZ << endl;
-
-
-
-    int pointsToTest = stoi(argv[2]); // Probably will become a command line argument.
-
-    Point **pointStorage = new Point *[pointsToTest];
-    int Sum = 0;
-
+    // Now we will fill our box R with randomly generated points, storing the points in an array
 for (int i = 0; i < pointsToTest; i++) {
-    randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
+    randX = generateRandomNumberInRange(minX, maxX);
+    randY = generateRandomNumberInRange(minY, maxY);
+    randZ = generateRandomNumberInRange(minZ, maxZ);
     pointStorage[i] = new Point(randX, randY, randZ); // Initializing set of points to test
 }
 
 
-    float volumeOfProtein;
-    float proportionInside;
-    float proportionInsideSquared;
-    float standardDeviation;
+    int Sum = 0;                                             // Initialize our counter for the number of points contained within the protein structure.
 
-    float *volStorage = new float [pointsToTest];
-    float *StdDevStorage = new float [pointsToTest];
-
-
-    for (int i = 0; i < pointsToTest; i++){
-        for (int j = 0; j < numInputs; j++){
-            if (array[j]->contains(*pointStorage[i])){
-                Sum += 1;
-                cout << "Point located inside protein structure. Total: " << Sum << " / " << i+1 << endl;
-
-
-
-                volumeOfProtein = volumeOfBox * Sum / (i+1);
-                proportionInside = volumeOfProtein / volumeOfBox;
-                proportionInsideSquared = proportionInside * proportionInside;
-                standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/(i+1));
-
-                cout << "Volume of protein calculated so far: " << volumeOfProtein << endl;
-                cout << "Standard Deviation: " << standardDeviation << endl;
-
-                volStorage[i] = volumeOfProtein;
-                StdDevStorage[i] = standardDeviation;
-
+    for (int i = 0; i < pointsToTest; i++){                  // For each point we generated in the box R....
+        for (int j = 0; j < numInputs; j++){                 // loop across all balls we have read in...
+            if (ballStorage[j]->contains(*pointStorage[i])){ // if a point is contained inside one of these balls, we...
+                Sum += 1;                                    // increment the counter of how many are contained inside. Break from this loop and move to the next point.
                 break;
             }
-            if (j == numInputs - 1){
-                Sum += 0;
-                cout << "Point NOT located inside protein structure. Total: " << Sum << " / " << i+1 << endl;
-
-                volumeOfProtein = volumeOfBox * Sum / (i+1);
-                proportionInside = volumeOfProtein / volumeOfBox;
-                proportionInsideSquared = proportionInside * proportionInside;
-                standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/(i+1));
-
-                cout << "Volume of protein calculated so far: " << volumeOfProtein << endl;
-                cout << "Standard Deviation: " << standardDeviation << endl;
-
-                volStorage[i] = volumeOfProtein;
-                StdDevStorage[i] = standardDeviation;
-
+            if (j == numInputs - 1){                         // If the point has been checked against every ball and none have contained the point...
+                Sum += 0;                                    //  we know this point must lay outside the protein structure, and so we do not increment the count, instead moving on.
                 break;
             }
         }
-
     }
 
-    volumeOfProtein = volumeOfBox * Sum / pointsToTest;
-    proportionInside = volumeOfProtein / volumeOfBox;
-    proportionInsideSquared = proportionInside * proportionInside;
-    standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/pointsToTest);
+    // Now we can calculate our volume and standard deviation, using the sum we found earlier.
+    // Proportion inside is equivalent to < f^2 >, and proportionInsideSquared is equivalent to < f >^2 in the prompt.
+    // It's worth noting that < f^2 > and < f > are identical, as f(x) = f(x)^2 when f(x) can only ever be 1 or 0. (1 = 1 * 1, 0 = 0 * 0)
+    double volumeOfProtein = volumeOfBox * Sum / pointsToTest;
+    double proportionInside = volumeOfProtein / volumeOfBox;
+    double proportionInsideSquared = proportionInside * proportionInside;
+    double standardDeviation = volumeOfBox * std::sqrt((proportionInside - proportionInsideSquared)/pointsToTest);
 
     cout << endl;
-    cout << "Completed testing. Total: " << Sum << " / " << pointsToTest << endl;
-    cout << "Volume of protein: " << volumeOfProtein << endl;
-    cout << "Volume of box: " << volumeOfBox << endl;
-    cout << "Standard Deviation: " << standardDeviation << endl;
-
-    float error = (100 - (100 * volumeOfProtein / 35490.34));
-    float absError = abs(100 - (100 * volumeOfProtein / 35490.34));
-    cout << "Error %: " << error << endl;
+    // cout << "Completed testing. Total: " << Sum << " / " << pointsToTest << endl;
+    cout << "Volume of protein: " << volumeOfProtein << " cubic angstrom " << endl;
+    // cout << "Volume of box: " << volumeOfBox << endl;
+    cout << "Standard deviation of volume: " << standardDeviation << " cubic angstrom " << endl;
 
 
-    // At this point, I am printing values for graphing purposes:
+    // At this point, volume has been calculated. Now for surface area.
 
-    cout  << 2 << " " << volStorage[1] << " " << StdDevStorage[1] << endl;
-    cout  << 10 << " " << volStorage[9] << " " << StdDevStorage[9] << endl;
-    cout  << 50 << " " << volStorage[49] << " " << StdDevStorage[49] << endl;
-    cout  << 100 << " " << volStorage[99] << " " << StdDevStorage[99] << endl;
-    cout  << 150 << " " << volStorage[149] << " " << StdDevStorage[149] << endl;
-    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
-        cout  << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
-        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    /*
+     * General strategy:
+     *
+     * Given a requested number of points to generate on the surface, we will calculate the total surface area of all spheres,
+     * then calculate the required density of points on the surface to reach the desired amount of total test points. Given this,
+     * we can then begin distributing points across the surfaces of the spheres, and calculate surface area in a manner very similar to that in our methodology for volume.
+     */
+
+
+
+    Point **surfacePointStorage = new Point *[pointsToTestOnSurface];
+
+    double totalSurfaceArea = 0;
+    for (int i = 0; i < numInputs; i++){
+        totalSurfaceArea += ballStorage[i]->surfaceArea();  // Sum total surface area
+    }
+
+    double surfaceDensityOfPoints = totalSurfaceArea / pointsToTestOnSurface;    // Calculate the desired density of points on the surface of balls.
+
+    int pointsGeneratedSoFar = 0;
+    for (int i = 0; i < numInputs; i++){                                                                         // For each ball we have in our model...
+        int remainingPointsToGenerateForThisBall = ((ballStorage[i]->surfaceArea()) / (surfaceDensityOfPoints)); // Figure out how many points need to be generated, utilizing surface area of a ball and desired density of points
+        while (remainingPointsToGenerateForThisBall > 0){                                                        // Then create them, and store them in an array.
+            remainingPointsToGenerateForThisBall--;
+            Point tempPoint = ballStorage[i]->generateRandomPointOnSphere();                                     // Utilizing our method for random point generation
+            surfacePointStorage[pointsGeneratedSoFar] = new Point(tempPoint.getX(), tempPoint.getY(), tempPoint.getZ());
+            pointsGeneratedSoFar++;
+        }
     }
 
 
 
-    // And now separating them to paste into excel
+    // Points have now been generated. Now we begin the time consuming part, testing these points.
 
-    cout  << 2 << endl;
-    cout  << 10 << endl;
-    cout  << 50 << endl;
-    cout  << 100 << endl;
-    cout  << 150 << endl;
-    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
-        cout  << i << endl;
-        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
+    int pointsToTestSurfaceArea = pointsGeneratedSoFar;
+
+
+    int surfaceSum = 0; // Initialize the sum we will use to count the number of points not contained within the other balls (That lay on the true surface of the protein)
+
+
+    for (int i = 0; i < pointsToTestSurfaceArea; i++){                          // For each point we generated on the surface...
+        for (int j = 0; j < numInputs; j++){                                    // Loop across all balls we have read in...
+
+            if (ballStorage[j]->contains(*surfacePointStorage[i])){             // If a point is contained inside (IE, not on the surface of the protein) ...
+                surfaceSum += 0;                                                // Do not increment the counter of how many are contained inside. Break from this loop and move to the next point, but update data.
+                break;
+            }
+            if (j == numInputs - 1){                                            // If all points have been tested and none have been contained...
+                surfaceSum += 1;                                                //  we know this point must lay on the surface, and so we increment the count of points that lay on the true surface of the protein
+                break;
+            }
+        }
     }
 
-    cout   << " " << volStorage[1]  << endl;
-    cout   << " " << volStorage[9] << endl;
-    cout   << " " << volStorage[49] << endl;
-    cout   << " " << volStorage[99] << endl;
-    cout   << " " << volStorage[149] << endl;
-    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
-        cout  << volStorage[i]  << endl;
-        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
-    }
 
-    cout  << StdDevStorage[1] << endl;
-    cout  <<  StdDevStorage[9] << endl;
-    cout  <<  StdDevStorage[49] << endl;
-    cout  <<  StdDevStorage[99] << endl;
-    cout  <<  StdDevStorage[149] << endl;
-    for (int i = 250; i < pointsToTest; i += (pointsToTest/200)){
-        cout  <<  StdDevStorage[i] << endl;
-        //cout << "Points tested / Volume / StdDev: " << i << " " << volStorage[i] << " " << StdDevStorage[i] << endl;
-    }
-    return 0;
+    // Now we perform our final calculations and output our results after.
+    // ProportionOnSurface is equivalent to < f^2 >, and proportionOnSurfaceSquared is equivalent to < f >^2 in the prompt.
+    // It's worth noting that < f^2 > and < f > are identical, as f(x) = f(x)^2 when f(x) can only ever be 1 or 0. (1 = 1 * 1, 0 = 0 * 0)
 
+    double surfaceAreaOfProtein = totalSurfaceArea * surfaceSum / (pointsToTestSurfaceArea);
+    double proportionOnSurface = surfaceAreaOfProtein / totalSurfaceArea;
+    double proportionOnSurfaceSquared = proportionOnSurface * proportionOnSurface;
+    double standardDeviationSurfaceArea = totalSurfaceArea * std::sqrt((proportionOnSurface - proportionOnSurfaceSquared)/(pointsToTestSurfaceArea));
+
+    cout << "Surface area of protein: " << surfaceAreaOfProtein << " square angstrom " << endl;
+    cout << "Standard deviation of surface area: " << standardDeviationSurfaceArea << " square angstrom " << endl;
+
+    return 0; // Concluded the program. End.
 
     // For visualization, we want a table with the number of points tested, our guess at volume, standard deviation, and an asymptotic line with
     // Use matlab for visualizations.
@@ -419,6 +397,9 @@ for (int i = 0; i < pointsToTest; i++) {
         sum += 0;
     }
 
+    After this has been done, we can calculate the proportion of points that fall inside the union of balls from "sum" and
+    "numInput", and multiply that times the bounds of the box we generated the points within
+
 */
 
 
@@ -431,7 +412,7 @@ for (int i = 0; i < pointsToTest; i++) {
     /*
      * Proposed program structure:
      *
-     * Program takes file name as command line arguments
+     * Program takes file name as command line arguments, in addition to a number of desired points to test
      *
      * File consists of lines of a number indicating the number of amino acids, followed by X,Y,Z coordinates & a radius
      *
