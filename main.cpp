@@ -403,23 +403,18 @@ for (int i = 0; i < pointsToTest; i++) {
 */
 
 
-
-
-
-
-
-
-    /*
+    /* Early Notes:
+     *
      * Proposed program structure:
      *
      * Program takes file name as command line arguments, in addition to a number of desired points to test
      *
-     * File consists of lines of a number indicating the number of amino acids, followed by X,Y,Z coordinates & a radius
+     * File consists of lines of a number indicating the number of atoms, followed by X,Y,Z coordinates & a radius
      *
-     * First step is to read in the number of amino acids that need to be kept track of
+     * First step is to read in the number of atoms that need to be kept track of
      *
-     * Following this, initialize an array of "amino acid" objects of the correct size to store these values
-     * Parse the file, reading in protein position and radius as we go into the various protein objects we construct
+     * Following this, initialize an array of "ball" objects of the correct size to store these values
+     * Parse the file, reading in atom positions and radius to create "ball" objects to represent these atoms in the array
      * While doing this, keep track of min & max X,Y,Z positions to configure our zone. (Account for radius of objects as well whilst doing this)
      *
      * Once all have been read in, we can begin the problem solving.
@@ -429,15 +424,22 @@ for (int i = 0; i < pointsToTest; i++) {
      * the volume "V" to be (maxX-minX) * (maxY-minY) * (maxZ-minZ)
      *
      * For each point, determine if it is located inside the protein or not, by checking to see if the distance from the point generated
-     * to the center of any of the "amino acid" balls is less than the radius of aforementioned ball.
+     * to the center of any of the "atom" balls is less than the radius of aforementioned ball.
      * Each time this is done, update a sum pointsContained which is equal to the number of points thus far contained in the circle, and a sum
      * pointsTested which is the number of points tested so far.
      *
      * Estimated volume can be calculated on the fly as pointsContained/pointsTested * V.
      * Visualization can be updated as this is done.
      *
-     * Need to ask professor about displaying standard deviation as the prompt is rather mystifying.
+     * NOTE: For speed optimization purposes, we no longer calculate volume after every single point is generated. We did this for a time period to
+     * scrape data for our graphs, but do not do so currently.
      *
-     * Suggest starting number of points should be 10000.
+     * Surface area can be handled in a similar manner, but points must be generated on the surface of the the "ball" objects that make up the protein,
+     * and "R" is no longer a box, but rather the sum of the surface area of all balls that make up the protein.
+     *
+     * We will take the total number of points that are not contained within the ball objects (these lay on the true surface) divided by the total number
+     * of points generated on the surface of each indivdual ball, and multiply this by the total surface area of all balls in our model.
+     *
+     * Suggest starting number of points should be around 10000.
      */
 
