@@ -12,36 +12,36 @@
 using namespace std;
 
 
-float generateRandomNumberInRange(float min, double max){
-    float randX = min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max-min)));
+double generateRandomNumberInRange(double min, double max){
+    double randX = min + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(max-min)));
     return randX;
 }
 
 
 class Point {
 public:
-    float getX() {
+    double getX() {
         return x;
     }
 
-    float getY() {
+    double getY() {
         return y;
     }
 
-    float getZ() {
+    double getZ() {
         return z;
     }
 
-    Point(float initX, float initY, float initZ) {
+    Point(double initX, double initY, double initZ) {
         x = initX;
         y = initY;
         z = initZ;
     }
 
 private:
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
 
 
 
@@ -50,50 +50,50 @@ private:
 
 class Ball {
 public:
-    float getX() {
+    double getX() {
         return x;
     }
 
-    float getY() {
+    double getY() {
         return y;
     }
 
-    float getZ() {
+    double getZ() {
         return z;
     }
 
-    float maxX() {
+    double maxX() {
         return x + radius;
     }
 
-    float maxY() {
+    double maxY() {
         return y + radius;
     }
 
-    float maxZ() {
+    double maxZ() {
         return z + radius;
     }
 
-    float minX() {
+    double minX() {
         return x - radius;
     }
 
-    float minY() {
+    double minY() {
         return y - radius;
     }
 
-    float minZ() {
+    double minZ() {
         return z - radius;
     }
 
-    float getRadius() {
+    double getRadius() {
         return radius;
     }
 
     bool contains(Point point) {
-        float pX = point.getX();
-        float pY = point.getY();
-        float pZ = point.getZ();
+        double pX = point.getX();
+        double pY = point.getY();
+        double pZ = point.getZ();
 // Distance = d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
         if ((((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z))) < (this->radius*this->radius)){
             return true;
@@ -106,19 +106,32 @@ public:
 
     Point generateRandomPointOnSphere(){
 
+        double theta = 2 * M_PI * generateRandomNumberInRange(0.0, 1);
+        double phi = acos(1 - 2 * generateRandomNumberInRange(0.0, 1));
+        double x = sin(phi) * cos(theta) * getRadius() * 1.000000000001;
+        double y = sin(phi) * sin(theta) * getRadius() * 1.000000000001;
+        double z = cos(phi) * getRadius() * 1.000000000001;
+
+/*
+ * // Currently testing an alternate method:
+ *
         // From Q(u,a) = (R*sqrt(1-(u*u))*cos(a), R*sqrt(1-(u*u))*sin(a), Ru
         // Where R is the radius, a is a randomly generated number from 0 to 2*pi, and u is a randomly generated number from [-1 to 1].
 
-        float a = generateRandomNumberInRange(0.0, 2*M_PI); // Generate a
-        float u = generateRandomNumberInRange(-1.0, 1); // Generate u
+        double a = generateRandomNumberInRange(0.0, 2*M_PI); // Generate a
+        double u = generateRandomNumberInRange(-1.0, 1); // Generate u
 
         // Now we calculate the position of the point:
 
-        float pointX = this->radius*sqrt(1-(u*u))*cos(a);
-        float pointY = this->radius*sqrt(1-(u*u))*sin(a);
-        float pointZ = this->radius*u;
+        double pointX = this->radius*sqrt(1-(u*u))*cos(a);
+        double pointY = this->radius*sqrt(1-(u*u))*sin(a);
+        double pointZ = this->radius*u;
 
         // Make sure that the X,Y,Z points are adjusted by the centerpoint of the sphere!
+*/
+        double pointX = x;
+        double pointY = y;
+        double pointZ = z;
 
         pointX += getX();
         pointY += getY();
@@ -126,24 +139,28 @@ public:
 
         Point NewPoint = Point(pointX, pointY, pointZ);
 
+        cout << "Point generated on surface of sphere. " << endl;
+        cout << "Point contained within the sphere it was generated on? " << boolalpha << this->contains(NewPoint) << endl;
+
         return NewPoint;
+
     }
 
-    float surfaceArea(){
-        float R = this->radius;
-        float surfaceArea = (4)*(M_PI)*(R*R); // 4 * pi * r^2
+    double surfaceArea(){
+        double R = this->radius;
+        double surfaceArea = (4)*(M_PI)*(R*R); // 4 * pi * r^2
         return surfaceArea;
     }
 
-    float distance(Point point) {
-        float pX = point.getX();
-        float pY = point.getY();
-        float pZ = point.getZ();
+    double distance(Point point) {
+        double pX = point.getX();
+        double pY = point.getY();
+        double pZ = point.getZ();
 // Distance = d = ((x1 - x2)^2 + (y1 - y2)^2 + (z1 - z2)^2)^½
         return (std::sqrt(((pX - this->x) * (pX - this->x)) + ((pY - this->y) * (pY - this->y)) + ((pZ - this->z) * (pZ - this->z))));
     }
 
-    Ball(float initX, float initY, float initZ, float initRadius) {
+    Ball(double initX, double initY, double initZ, double initRadius) {
         x = initX;
         y = initY;
         z = initZ;
@@ -151,10 +168,10 @@ public:
     }
 
 private:
-    float x;
-    float y;
-    float z;
-    float radius;
+    double x;
+    double y;
+    double z;
+    double radius;
 };
 
 
@@ -176,7 +193,7 @@ int main(int argc, char** argv) {
     std::cout << "Radius: " << b.getRadius() << std::endl;
 
     Point bP = b.generateRandomPointOnSphere();
-    float distance = b.distance(bP);
+    double distance = b.distance(bP);
     cout << "distance from point bP on surface of b to the center of b: " << distance << endl;
     bool isAPointOnTheSurfaceContained = b.contains(bP);
     cout << "Is bP contained inside b? " << boolalpha << isAPointOnTheSurfaceContained << endl;
@@ -207,17 +224,17 @@ int main(int argc, char** argv) {
     // std::cout << argv[1] << std::endl; // Print it to examine contents of the text file.
 
     int numInputs = 0;
-    float tempX = 0;
-    float tempY = 0;
-    float tempZ = 0;
-    float tempRadius = 0;
+    double tempX = 0;
+    double tempY = 0;
+    double tempZ = 0;
+    double tempRadius = 0;
 
-    float maxX;
-    float maxY;
-    float maxZ;
-    float minX;
-    float minY;
-    float minZ;
+    double maxX;
+    double maxY;
+    double maxZ;
+    double minX;
+    double minY;
+    double minZ;
 
     fscanf(textPtr, "        %d\n", &numInputs); // Parsing first line of text file
 
@@ -226,7 +243,7 @@ int main(int argc, char** argv) {
     Ball **ballStorage = new Ball *[numInputs]; // Initialize the array of spheres
 
     // Scan in the initial set of values from the first line
-    fscanf(textPtr, "  %f     %f     %f     %f\n", &tempX, &tempY, &tempZ, &tempRadius);
+    fscanf(textPtr, "  %lf     %lf     %lf     %lf\n", &tempX, &tempY, &tempZ, &tempRadius);
     ballStorage[0] = new Ball(tempX, tempY, tempZ, tempRadius);
     cout << "Ball " << 0 << " radius: " << ballStorage[0]->getRadius() << endl;
     cout << "Ball " << 0 << " X, Y, Z: " << ballStorage[0]->getX() << ", " << ballStorage[0]->getY() << ", " << ballStorage[0]->getZ()
@@ -242,7 +259,7 @@ int main(int argc, char** argv) {
 
     // Now we begin looping through the remainder of the lines in the text file.
     for (int i = 1; i < numInputs; i += 1) {
-        fscanf(textPtr, "  %f     %f     %f     %f\n", &tempX, &tempY, &tempZ, &tempRadius);
+        fscanf(textPtr, "  %lf     %lf     %lf     %lf\n", &tempX, &tempY, &tempZ, &tempRadius);
         ballStorage[i] = new Ball(tempX, tempY, tempZ, tempRadius);
         cout << "Ball " << i << " radius: " << ballStorage[i]->getRadius() << endl;
         cout << "Ball " << i << " X, Y, Z: " << ballStorage[i]->getX() << ", " << ballStorage[i]->getY() << ", " << ballStorage[i]->getZ()
@@ -284,11 +301,11 @@ int main(int argc, char** argv) {
     cout << "Y: " << minY << " to " << maxY << endl;
     cout << "Z: " << minZ << " to " << maxZ << endl;
 
-    float xLength = maxX - minX;
-    float yLength = maxY - minY;
-    float zLength = maxZ - minZ;
+    double xLength = maxX - minX;
+    double yLength = maxY - minY;
+    double zLength = maxZ - minZ;
 
-    float volumeOfBox = xLength * yLength * zLength; // Volume of box can now be calculated.
+    double volumeOfBox = xLength * yLength * zLength; // Volume of box can now be calculated.
 
     // Seed random number generation.
     srand (static_cast <unsigned> (time(0)));
@@ -297,18 +314,18 @@ int main(int argc, char** argv) {
 
 
 
-    float randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    float randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    float randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
+    double randX = minX + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxX-minX)));
+    double randY = minY + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxY-minY)));
+    double randZ = minZ + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxZ-minZ)));
 
     cout << "Testing Random Number generation:" << endl;
     cout << "Random X value in range: " << randX << endl;
     cout << "Random Y value in range: " << randY << endl;
     cout << "Random Z value in range: " << randZ << endl;
 
-    randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
+    randX = minX + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxX-minX)));
+    randY = minY + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxY-minY)));
+    randZ = minZ + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxZ-minZ)));
 
     cout << "Testing Random Number generation:" << endl;
     cout << "Random X value in range: " << randX << endl;
@@ -323,20 +340,20 @@ int main(int argc, char** argv) {
     int Sum = 0;
 
 for (int i = 0; i < pointsToTest; i++) {
-    randX = minX + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxX-minX)));
-    randY = minY + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxY-minY)));
-    randZ = minZ + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(maxZ-minZ)));
+    randX = minX + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxX-minX)));
+    randY = minY + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxY-minY)));
+    randZ = minZ + static_cast <double> (rand()) /( static_cast <double> (RAND_MAX/(maxZ-minZ)));
     pointStorage[i] = new Point(randX, randY, randZ); // Initializing set of points to test
 }
 
 
-    float volumeOfProtein;
-    float proportionInside;
-    float proportionInsideSquared;
-    float standardDeviation;
+    double volumeOfProtein;
+    double proportionInside;
+    double proportionInsideSquared;
+    double standardDeviation;
 
-    float *volStorage = new float [pointsToTest];
-    float *StdDevStorage = new float [pointsToTest];
+    double *volStorage = new double [pointsToTest];
+    double *StdDevStorage = new double [pointsToTest];
 
 
     for (int i = 0; i < pointsToTest; i++){
@@ -392,8 +409,8 @@ for (int i = 0; i < pointsToTest; i++) {
     cout << "Volume of box: " << volumeOfBox << endl;
     cout << "Standard Deviation: " << standardDeviation << endl;
 
-    float error = (100 - (100 * volumeOfProtein / 35490.34));
-    // float absError = abs(100 - (100 * volumeOfProtein / 35490.34));
+    double error = (100 - (100 * volumeOfProtein / 35490.34));
+    // double absError = abs(100 - (100 * volumeOfProtein / 35490.34));
     cout << "Error %: " << error << endl;
 
 /*
@@ -465,12 +482,12 @@ for (int i = 0; i < pointsToTest; i++) {
 
 
 
-    float totalSurfaceArea = 0;
+    double totalSurfaceArea = 0;
     for (int i = 0; i < numInputs; i++){
         totalSurfaceArea += ballStorage[i]->surfaceArea();  // Sum total surface area
     }
 
-    float surfaceDensityOfPoints = totalSurfaceArea / pointsToTestOnSurface;
+    double surfaceDensityOfPoints = totalSurfaceArea / pointsToTestOnSurface;
 
 
 
@@ -491,13 +508,13 @@ for (int i = 0; i < pointsToTest; i++) {
 
     int pointsToTestSurfaceArea = pointsGeneratedSoFar;
 
-    float surfaceAreaOfProtein;
-    float proportionOnSurface;
-    float proportionOnSurfaceSquared;
-    float standardDeviationSurfaceArea;
+    double surfaceAreaOfProtein;
+    double proportionOnSurface;
+    double proportionOnSurfaceSquared;
+    double standardDeviationSurfaceArea;
 
-    float *surfaceAreaStorage = new float [pointsToTestSurfaceArea];
-    float *StdDevStorageSurfaceArea = new float [pointsToTestSurfaceArea];
+    double *surfaceAreaStorage = new double [pointsToTestSurfaceArea];
+    double *StdDevStorageSurfaceArea = new double [pointsToTestSurfaceArea];
 
     int surfaceSum = 0;
 
@@ -589,7 +606,7 @@ for (int i = 0; i < pointsToTest; i++) {
     /*
      * Proposed program structure:
      *
-     * Program takes file name as command line arguments
+     * Program takes file name as command line arguments, in addition to a number of desired points to test
      *
      * File consists of lines of a number indicating the number of amino acids, followed by X,Y,Z coordinates & a radius
      *
